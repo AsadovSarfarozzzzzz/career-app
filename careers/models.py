@@ -2,6 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 
 # Create your models here.
+class Question(models.Model):
+    text = models.CharField(max_length=300)
+
+    def __str__(self):
+        return self.text
+    
 class Category(models.Model):
     title = models.CharField(max_length=100)
     icon = models.CharField(max_length=100, blank=True)
@@ -19,6 +25,15 @@ class Career(models.Model):
 
     def __str__(self):
         return self.title
+
+class Answer(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answer')
+    text = models.CharField(max_length=200)
+    career = models.ForeignKey(Career, on_delete=models.CASCADE, related_name='answers', null=True, blank=True)
+
+    def __str__(self):
+        return self.text
+    
 
 class Step(models.Model):
     career = models.ForeignKey(Career, on_delete=models.CASCADE, related_name='steps')

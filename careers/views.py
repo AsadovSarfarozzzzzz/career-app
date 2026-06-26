@@ -1,13 +1,43 @@
 from rest_framework import viewsets
-from .models import Career, Step, Material, Progress
+from .models import Career, Step, Material, Progress, Answer
 from .serializers import CareerSerializer, StepSerializer, MaterialSerializer, ProgressSerializer, RegisterSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from collections import Counter
 
 
 # Create your views here.
+class CareerTestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        print("ПРИШЛО:", request.data)
+        answer_ids = request.data.get('answers', [])
+
+        if not answer_ids:
+            return Response({'error':'Нет ответов'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        answers = Answer.objects.filter(id__in=answer_ids).select_related('career')
+
+        votes = Counter()
+
+        for answer in answers:
+            if answer.career:
+                votes[answer.career.title] += 1
+        
+        if not votes:
+            return Response({'message': 'Не удалось определить направление'})
+
+        winner = votes.most_common(1)[0]
+
+        return Response({
+            'recommended': winner[0],
+            'votes': winner[1],
+            'all_votes': dict(votes),
+        })
+
 class CareerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Career.objects.prefetch_related('steps__materials').all()
     serializer_class = CareerSerializer
