@@ -1,7 +1,17 @@
 from rest_framework import serializers
-from .models import Career, Step, Material, Progress, Category
+from .models import Career, Step, Material, Progress, Category, Subcategory, Topic
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+
+class TopicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Topic
+        fields = ['id', 'title', 'order_num', 'content']
+
+class SubcategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subcategory
+        fields = ['id', 'title', 'icon', 'description']
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,10 +25,10 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 class StepSerializer(serializers.ModelSerializer):
     materials = MaterialSerializer(many=True, read_only=True)
-
+    topics = TopicSerializer(many=True, read_only=True)
     class Meta:
         model = Step
-        fields = ['id', 'title', 'order_num', 'description', 'materials']
+        fields = ['id', 'title', 'order_num', 'description', 'materials','topics']
 
 class CareerSerializer(serializers.ModelSerializer):
     steps = StepSerializer(many=True, read_only=True)

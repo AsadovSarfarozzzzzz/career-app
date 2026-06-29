@@ -12,9 +12,19 @@ class Category(models.Model):
     def __str__(self):
         return self.title
 
+class Subcategory(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
+    title = models.CharField(max_length=200)
+    icon = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return f'{self.category.title} --> {self.title}'
+    
 
 class Career(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='careers')
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='careers')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=100, blank=True)
@@ -35,6 +45,20 @@ class Step(models.Model):
     def __str__(self):
         return f'{self.career.title} --- {self.title}'
 
+class Topic(models.Model):
+    step = models.ForeignKey(
+        Step, on_delete=models.CASCADE, 
+        related_name='topics'
+    )
+    title = models.CharField(max_length=200)
+    order_num = models.IntegerField(default=0)
+    content = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['order_num']
+
+    def __str__(self):
+        return f"{self.step.title} → {self.title}"
 
 class Material(models.Model):
     step = models.ForeignKey(Step, on_delete=models.CASCADE, related_name='materials')

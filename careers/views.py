@@ -1,11 +1,63 @@
 from rest_framework import viewsets
-from .serializers import CareerSerializer, StepSerializer, MaterialSerializer, ProgressSerializer, RegisterSerializer
+from .serializers import CareerSerializer, StepSerializer, MaterialSerializer, ProgressSerializer, RegisterSerializer, SubcategorySerializer, TopicSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from collections import Counter
-from .models import Career, Step, Material, Progress, Profile, Answer
+from .models import Career, Step, Material, Progress, Profile, Answer, Subcategory, Topic, Category
+
+class CategoryWithSubsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Все категории с их подкатегориями
+        categories = Category.objects.prefetch_related('subcategories').all()
+        result = []
+        for cat in categories:
+            subs = Subcategory.objects.filter(category=cat)
+            result.append({
+                'id': cat.id,
+                'title': cat.title,
+                'icon': cat.icon,
+                'subcategories': SubcategorySerializer(subs, many=True).data,
+            })
+        return Response(result)
+
+
+class SubcategoryCareersView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, subcategory_id):
+        # Направления внутри подкатегории
+        careers = Career.objects.filter(subcategory_id=subcategory_id)
+        result = []
+        for career in careers:
+            result.append({
+                'id': career.id,
+                'title': career.title,
+                'description': career.description,
+                'icon': career.icon,
+            })
+        return Response(result)
+
+
+class StepTopicsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, step_id):
+        # Темы внутри шага
+        try:
+            step = Step.objects.get(id=step_id)
+        except Step.DoesNotExist:
+            return Response({'error': 'Не найдено'}, status=status.HTTP_404_NOT_FOUND)
+        
+        topics = Topic.objects.filter(step=step).order_by('order_num')
+        return Response({
+            'step_id': step.id,
+            'step_title': step.title,
+            'topics': TopicSerializer(topics, many=True).data,
+        })
 
 class ChooseCareerView(APIView):
     permission_classes = [IsAuthenticated]
