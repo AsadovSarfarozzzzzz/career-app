@@ -4,7 +4,7 @@ from .views import (
     MyProgressView, MarkStepView, RegisterView,
     CareerProgressView, CareerTestView,
     ChooseCareerView, MyActiveCareerView,
-    CategoryWithSubsView, SubcategoryCareersView, StepTopicsView,
+    CategoryWithSubsView, SubcategoryCareersView, StepTopicsView, MarkTopicView, StepTopicsProgressView,
 )
 from django.urls import path
 
@@ -24,4 +24,7 @@ urlpatterns = router.urls +[
     path('categories-subs/', CategoryWithSubsView.as_view(), name='categories-subs'),
     path('subcategory/<int:subcategory_id>/careers/', SubcategoryCareersView.as_view(), name='subcategory-careers'),
     path('step/<int:step_id>/topics/', StepTopicsView.as_view(), name='step-topics'),
+    path('mark-topic/<int:topic_id>/', MarkTopicView.as_view(), name='mark-topic'),
+    path('step/<int:step_id>/topics-progress/', StepTopicsProgressView.as_view(), name='topics-progress'),
+
 ]

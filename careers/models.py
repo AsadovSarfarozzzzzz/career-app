@@ -60,6 +60,17 @@ class Topic(models.Model):
     def __str__(self):
         return f"{self.step.title} → {self.title}"
 
+class TopicProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='topic_progress')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='progress')
+    completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'topic')
+
+    def __str__(self):
+        return f"{self.user.username} — {self.topic.title}"
+
 class Material(models.Model):
     step = models.ForeignKey(Step, on_delete=models.CASCADE, related_name='materials')
     title = models.CharField(max_length=200)

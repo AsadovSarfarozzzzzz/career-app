@@ -5,7 +5,81 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from collections import Counter
-from .models import Career, Step, Material, Progress, Profile, Answer, Subcategory, Topic, Category
+from .models import Career, Step, Material, Progress, Profile, Answer, Subcategory, Topic, Category, TopicProgress
+
+class MarkTopicView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, topic_id):
+        try:
+            topic = Topic.objects.get(id=topic_id)
+        except Topic.DoesNotExist:
+            return Response({'error': 'Тема не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Отмечаем тему пройденной
+        tp, _ = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
+        tp.completed = True
+        tp.save()
+
+        # Проверяем — все ли темы шага пройдены
+        step = topic.step
+        all_topics = Topic.objects.filter(step=step)
+        completed_topics = TopicProgress.objects.filter(
+            user=request.user,
+            topic__step=step,
+            completed=True
+        ).count()
+
+        step_completed = False
+        # Если все темы пройдены — отмечаем шаг пройденным
+        if all_topics.count() > 0 and completed_topics >= all_topics.count():
+            progress, _ = Progress.objects.get_or_create(user=request.user, step=step)
+            progress.completed = True
+            progress.save()
+            step_completed = True
+
+        return Response({
+            'message': f'Тема "{topic.title}" пройдена',
+            'topic_completed': True,
+            'step_completed': step_completed,
+            'topics_done': completed_topics,
+            'topics_total': all_topics.count(),
+        })
+
+
+class StepTopicsProgressView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, step_id):
+        try:
+            step = Step.objects.get(id=step_id)
+        except Step.DoesNotExist:
+            return Response({'error': 'Не найдено'}, status=status.HTTP_404_NOT_FOUND)
+
+        topics = Topic.objects.filter(step=step).order_by('order_num')
+        completed_ids = set(
+            TopicProgress.objects.filter(
+                user=request.user,
+                topic__step=step,
+                completed=True
+            ).values_list('topic_id', flat=True)
+        )
+
+        topics_data = []
+        for i, topic in enumerate(topics):
+            available = i == 0 or topics[i-1].id in completed_ids
+            topics_data.append({
+                'id': topic.id,
+                'title': topic.title,
+                'content': topic.content,
+                'completed': topic.id in completed_ids,
+                'available': available,
+            })
+
+        return Response({
+            'step_title': step.title,
+            'topics': topics_data,
+        })
 
 class CategoryWithSubsView(APIView):
     permission_classes = [AllowAny]
