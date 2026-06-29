@@ -11,7 +11,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
-        fields = ['id', 'title', 'type', 'url', 'description']
+        fields = ['id', 'title', 'type', 'url', 'description','content']
 
 class StepSerializer(serializers.ModelSerializer):
     materials = MaterialSerializer(many=True, read_only=True)

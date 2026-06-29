@@ -1,14 +1,72 @@
 from rest_framework import viewsets
-from .models import Career, Step, Material, Progress, Answer
 from .serializers import CareerSerializer, StepSerializer, MaterialSerializer, ProgressSerializer, RegisterSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from collections import Counter
+from .models import Career, Step, Material, Progress, Profile, Answer
+
+class ChooseCareerView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, career_id):
+        try:
+            career = Career.objects.get(id=career_id)
+        except Career.DoesNotExist:
+            return Response({'error': 'Не найдено'}, status=status.HTTP_404_NOT_FOUND)
+
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        profile.active_career = career
+        profile.save()
+
+        return Response({
+            'message': f'Вы выбрали курс: {career.title}',
+            'career_id': career.id,
+            'career_title': career.title,
+        })
 
 
-# Create your views here.
+class MyActiveCareerView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            profile = Profile.objects.get(user=request.user)
+            if profile.active_career:
+                career = profile.active_career
+                steps = Step.objects.filter(career=career).order_by('order_num')
+                
+                completed_ids = set(
+                    Progress.objects.filter(
+                        user=request.user,
+                        step__career=career,
+                        completed=True
+                    ).values_list('step_id', flat=True)
+                )
+
+                steps_data = []
+                for i, step in enumerate(steps):
+                    available = i == 0 or steps[i-1].id in completed_ids
+                    steps_data.append({
+                        'id': step.id,
+                        'title': step.title,
+                        'order_num': step.order_num,
+                        'description': step.description,
+                        'completed': step.id in completed_ids,
+                        'available': available,
+                    })
+
+                return Response({
+                    'career_id': career.id,
+                    'career_title': career.title,
+                    'category': career.category.title if career.category else '',
+                    'steps': steps_data,
+                })
+            else:
+                return Response({'career': None, 'message': 'Курс не выбран'})
+        except Profile.DoesNotExist:
+            return Response({'career': None, 'message': 'Курс не выбран'})
 class CareerTestView(APIView):
     permission_classes = [AllowAny]
 

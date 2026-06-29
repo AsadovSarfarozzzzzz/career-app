@@ -1,6 +1,10 @@
 from rest_framework.routers import DefaultRouter
-from .views import (CareerViewSet, StepViewSet, MaterialViewSet, 
-    MyProgressView, MarkStepView, RegisterView, CareerProgressView, CareerTestView)
+from .views import (
+    CareerViewSet, StepViewSet, MaterialViewSet,
+    MyProgressView, MarkStepView, RegisterView,
+    CareerProgressView, CareerTestView,
+    ChooseCareerView, MyActiveCareerView,
+)
 from django.urls import path
 
 router = DefaultRouter()
@@ -14,4 +18,6 @@ urlpatterns = router.urls +[
     path('mark-step/<int:step_id>/', MarkStepView.as_view(), name='mark-step'),
     path('career-progress/<int:career_id>/', CareerProgressView.as_view(), name='career-progress'),
     path('career-test/', CareerTestView.as_view(), name='career-test'),
+    path('choose-career/<int:career_id>/', ChooseCareerView.as_view(), name='choose-career'),
+    path('my-career/', MyActiveCareerView.as_view(), name='my-career'),
 ]
