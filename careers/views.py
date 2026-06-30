@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from collections import Counter
+from datetime import date, timedelta
 from .models import Career, Step, Material, Progress, Profile, Answer, Subcategory, Topic, Category, TopicProgress
 
 class MarkTopicView(APIView):
@@ -17,9 +18,27 @@ class MarkTopicView(APIView):
             return Response({'error': 'Тема не найдена'}, status=status.HTTP_404_NOT_FOUND)
 
         # Отмечаем тему пройденной
-        tp, _ = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
+        tp, created = TopicProgress.objects.get_or_create(user=request.user, topic=topic)
+        already_done = tp.completed
         tp.completed = True
         tp.save()
+
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        xp_earned = 0
+        if not already_done:
+            xp_earned = 10
+            profile.xp += xp_earned
+
+            # Логика streak
+            today = date.today()
+            if profile.last_activity == today:
+                pass  # уже занимался сегодня, streak не меняется
+            elif profile.last_activity == today - timedelta(days=1):
+                profile.streak += 1  # занимался вчера — продолжаем серию
+            else:
+                profile.streak = 1  # пропуск или первый день — начинаем заново
+            profile.last_activity = today
+            profile.save()
 
         # Проверяем — все ли темы шага пройдены
         step = topic.step
@@ -44,6 +63,10 @@ class MarkTopicView(APIView):
             'step_completed': step_completed,
             'topics_done': completed_topics,
             'topics_total': all_topics.count(),
+            'xp_earned': xp_earned,
+            'total_xp': profile.xp,
+            'streak': profile.streak,
+            'level': profile.level,
         })
 
 
@@ -308,4 +331,24 @@ class CareerProgressView(APIView):
             'total_steps': total_steps,
             'completes_steps': completes_steps,
             'percent': percent,
+        })
+
+class UserStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        
+        # Сколько тем пройдено всего
+        topics_done = TopicProgress.objects.filter(user=request.user, completed=True).count()
+        # Сколько шагов пройдено
+        steps_done = Progress.objects.filter(user=request.user, completed=True).count()
+
+        return Response({
+            'username': request.user.username,
+            'xp': profile.xp,
+            'level': profile.level,
+            'streak': profile.streak,
+            'topics_completed': topics_done,
+            'steps_completed': steps_done,
         })

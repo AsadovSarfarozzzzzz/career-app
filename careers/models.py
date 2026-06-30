@@ -99,6 +99,13 @@ class Progress(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     active_career = models.ForeignKey(Career, on_delete=models.SET_NULL, null=True, blank=True, related_name='enrolled_users')
+    xp = models.IntegerField(default=0)
+    streak = models.IntegerField(default=0)
+    last_activity = models.DateField(null=True, blank=True)
+
+    @property
+    def level(self):
+        return self.xp // 100 + 1
 
     def __str__(self):
         return f"{self.user.username} - {self.active_career}"
