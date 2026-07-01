@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from .serializers import CareerSerializer, StepSerializer, MaterialSerializer, ProgressSerializer, RegisterSerializer, SubcategorySerializer, TopicSerializer
+from .serializers import CareerSerializer, StepSerializer, MaterialSerializer, ProgressSerializer, RegisterSerializer, SubcategorySerializer, TopicSerializer, PageSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -97,6 +97,7 @@ class StepTopicsProgressView(APIView):
                 'content': topic.content,
                 'completed': topic.id in completed_ids,
                 'available': available,
+                'pages': PageSerializer(topic.pages.all(), many=True).data,
             })
 
         return Response({
