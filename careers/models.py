@@ -60,6 +60,20 @@ class Topic(models.Model):
     def __str__(self):
         return f"{self.step.title} → {self.title}"
 
+class Page(models.Model):
+    topic = models.ForeignKey(
+        Topic, on_delete=models.CASCADE,
+        related_name='pages'
+    )
+    order_num = models.IntegerField(default=0)
+    content = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['order_num']
+
+    def __str__(self):
+        return f"{self.topic.title} → страница {self.order_num}"
+
 class TopicProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='topic_progress')
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='progress')

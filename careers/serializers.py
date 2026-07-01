@@ -1,12 +1,20 @@
 from rest_framework import serializers
-from .models import Career, Step, Material, Progress, Category, Subcategory, Topic
+from .models import Career, Step, Material, Progress, Category, Subcategory, Topic, Page
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 
+from .models import Page
+
+class PageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Page
+        fields = ['id', 'order_num', 'content']
+
 class TopicSerializer(serializers.ModelSerializer):
+    pages = PageSerializer(many=True, read_only=True)  
     class Meta:
         model = Topic
-        fields = ['id', 'title', 'order_num', 'content']
+        fields = ['id', 'title', 'order_num', 'content', 'pages']
 
 class SubcategorySerializer(serializers.ModelSerializer):
     class Meta:
