@@ -5,6 +5,21 @@ from django.contrib.auth.password_validation import validate_password
 
 from .models import Page
 
+from .models import Question, Answer
+
+class AnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Answer
+        fields = ['id', 'text']  # НЕ включаем is_correct — чтобы клиент не видел правильный ответ!
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    answers = AnswerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'text', 'order_num', 'answers']
+
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Page

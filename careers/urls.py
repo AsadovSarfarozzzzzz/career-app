@@ -5,7 +5,7 @@ from .views import (
     CareerProgressView, CareerTestView,
     ChooseCareerView, MyActiveCareerView,
     CategoryWithSubsView, SubcategoryCareersView, StepTopicsView, MarkTopicView, StepTopicsProgressView,
-    UserStatsView
+    UserStatsView, TopicQuizView, TopicQuizCheckView,
 )
 from django.urls import path
 
@@ -28,4 +28,6 @@ urlpatterns = router.urls +[
     path('mark-topic/<int:topic_id>/', MarkTopicView.as_view(), name='mark-topic'),
     path('step/<int:step_id>/topics-progress/', StepTopicsProgressView.as_view(), name='topics-progress'),
     path('my-stats/', UserStatsView.as_view(), name='my-stats'),
+    path('topic/<int:topic_id>/quiz/', TopicQuizView.as_view(), name='topic-quiz'),
+    path('topic/<int:topic_id>/quiz/check/', TopicQuizCheckView.as_view(), name='topic-quiz-check'),
 ]

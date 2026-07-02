@@ -126,7 +126,12 @@ class Profile(models.Model):
 
 
 class Question(models.Model):
-    text = models.CharField(max_length=300)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='questions', null=True, blank=True)
+    text = models.CharField(max_length=500)
+    order_num = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order_num']
 
     def __str__(self):
         return self.text
@@ -136,6 +141,7 @@ class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     text = models.CharField(max_length=200)
     career = models.ForeignKey(Career, on_delete=models.CASCADE, related_name='answers', null=True, blank=True)
+    is_correct = models.BooleanField(default=False)
 
     def __str__(self):
         return self.text

@@ -1,12 +1,66 @@
 from rest_framework import viewsets
-from .serializers import CareerSerializer, StepSerializer, MaterialSerializer, ProgressSerializer, RegisterSerializer, SubcategorySerializer, TopicSerializer, PageSerializer
+from .serializers import (CareerSerializer, StepSerializer, MaterialSerializer, ProgressSerializer, RegisterSerializer, 
+SubcategorySerializer, TopicSerializer, PageSerializer,QuestionSerializer)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from collections import Counter
 from datetime import date, timedelta
-from .models import Career, Step, Material, Progress, Profile, Answer, Subcategory, Topic, Category, TopicProgress
+from .models import Career, Step, Material, Progress, Profile, Question,Answer, Subcategory, Topic, Category, TopicProgress
+
+class TopicQuizView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, topic_id):
+        # Вопросы темы с вариантами (без правильных ответов)
+        try:
+            topic = Topic.objects.get(id=topic_id)
+        except Topic.DoesNotExist:
+            return Response({'error': 'Тема не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
+        questions = Question.objects.filter(topic=topic).order_by('order_num')
+        return Response({
+            'topic_title': topic.title,
+            'questions': QuestionSerializer(questions, many=True).data,
+        })
+
+
+class TopicQuizCheckView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, topic_id):
+        # Проверка ответов. Ожидаем: {"answers": {question_id: answer_id, ...}}
+        user_answers = request.data.get('answers', {})
+
+        questions = Question.objects.filter(topic_id=topic_id)
+        total = questions.count()
+        correct = 0
+        results = []
+
+        for q in questions:
+            # правильный вариант этого вопроса
+            correct_answer = Answer.objects.filter(question=q, is_correct=True).first()
+            user_answer_id = user_answers.get(str(q.id)) or user_answers.get(q.id)
+
+            is_right = correct_answer and str(user_answer_id) == str(correct_answer.id)
+            if is_right:
+                correct += 1
+
+            results.append({
+                'question_id': q.id,
+                'correct': bool(is_right),
+                'correct_answer_id': correct_answer.id if correct_answer else None,
+            })
+
+        passed = correct == total and total > 0
+
+        return Response({
+            'total': total,
+            'correct': correct,
+            'passed': passed,
+            'results': results,
+        })
 
 class MarkTopicView(APIView):
     permission_classes = [IsAuthenticated]
